@@ -6,7 +6,7 @@
       "cfg": 6.04,
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
-      "denoise": 1,
+      "denoise": 0.5,
       "model": [
         "36",
         0
@@ -92,18 +92,6 @@
     "class_type": "GrowMask",
     "_meta": {
       "title": "GrowMask"
-    }
-  },
-  "20": {
-    "inputs": {
-      "mask": [
-        "46",
-        0
-      ]
-    },
-    "class_type": "MaskPreview+",
-    "_meta": {
-      "title": "🔧 Mask Preview"
     }
   },
   "32": {
