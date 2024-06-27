@@ -17,7 +17,8 @@ COMFY_ADDRESS = os.getenv("COMFY_ADDRESS")
 HISTORY_ENDPOINT = "history"
 PROMPT_ENDPOINT = "prompt"
 VIEW_ENDPOINT = "view"
-UPLOAD_ENDPOINT = "upload/image"
+UPLOAD_IMAGE_ENDPOINT = "upload/image"
+UPLOAD_MASK_ENDPOINT = "upload/mask"
 
 OUTPUT_DIR = "/home/yongebai/ComfyUI/output/"
 WORKFLOW = "i2i.json"
@@ -44,24 +45,18 @@ def load_workflow(workflow_path):
     random_num = random.randrange(0, 1_000_000)
     with open(workflow_path, "r") as file:
         workflow = json.load(file)
-        # workflow["47"]["inputs"]["image"] = input_image
-
         workflow["3"]["inputs"]["seed"] = random_num
         return workflow
 
 
-def get_history(prompt_id, max_retries=10, delay=5):
+def get_history(prompt_id, max_retries=20, delay=5):
     server_address = COMFY_ADDRESS + HISTORY_ENDPOINT
     server_address += "/" + prompt_id
     for attempt in range(max_retries):
         response = requests.get(server_address)
-        print(
-            f"Attempt {attempt + 1}/{max_retries}: Response status code: {response.status_code}"
-        )
 
         if response.status_code == 200:
             history = response.json()
-            print(f"History response: {history}")
             if prompt_id in history:
                 return history
 
@@ -103,8 +98,11 @@ def get_images(prompt_id):
     return output_images
 
 
-def upload_image(numpy_img):
-    server_address = COMFY_ADDRESS + UPLOAD_ENDPOINT
+def upload_image(numpy_img, mask: bool):
+    if mask:
+        server_address = COMFY_ADDRESS + UPLOAD_IMAGE_ENDPOINT
+    else:
+        server_address = COMFY_ADDRESS + UPLOAD_MASK_ENDPOINT
     image_bytes = numpy_to_bytes(numpy_img)
 
     multipart_data = MultipartEncoder(
@@ -115,7 +113,7 @@ def upload_image(numpy_img):
         }
     )
 
-    headers = {'Content-Type': multipart_data.content_type}
+    headers = {"Content-Type": multipart_data.content_type}
 
     response = requests.post(server_address, data=multipart_data, headers=headers)
 
@@ -133,7 +131,7 @@ def numpy_to_bytes(numpy_img):
     return byte_arr.getvalue()
 
 
-def generate_image(numpy_img):
+def generate_image(numpy_img, numpy_mask):
     try:
         # Step 1: Upload the image
         upload_result = upload_image(numpy_img)
@@ -143,13 +141,13 @@ def generate_image(numpy_img):
         workflow = load_workflow(WORKFLOW)
         image_path = f"{upload_result['subfolder']}/{upload_result['name']}".strip("/")
         workflow["47"]["inputs"]["image"] = image_path
-        print(f"Modified workflow with image path: {image_path}")
 
         # Step 3: Queue the prompt
         queue_result = queue_prompt(workflow)
         if not queue_result or "prompt_id" not in queue_result:
             print("Error: Failed to queue prompt. Result:", queue_result)
             return None
+
         prompt_id = queue_result["prompt_id"]
         print(f"Queued prompt with ID: {prompt_id}")
 
@@ -174,7 +172,37 @@ def generate_image(numpy_img):
         print(f"Error in generate_image: {str(e)}")
         return None
 
+def parse_gradio(canvas_dict):
+    base_image = canvas_dict["background"]
+    mask = canvas_dict["layers"]
 
-demo = gr.Interface(fn=generate_image, inputs=["image"], outputs=["image"])
+    generate_image(base_image, mask)
 
-demo.launch()
+
+iface = gr.Interface(
+    fn=parse_gradio,
+    inputs=[
+        gr.ImageEditor(
+            type="numpy",
+            brush=gr.Brush(color_mode="fixed", colors=["#000000"]),
+        )
+    ],
+    outputs=gr.Image(label="Inpainted Result"),
+    title="Inpainting with Dynamic Mask",
+    description="Upload an image, draw a mask, and see the inpainting result.",
+)
+
+# Launch the interface
+iface.launch()
+
+
+# Launch the interface
+iface.launch()
+
+# demo = gr.Interface(
+#     fn=generate_image,
+#     inputs=["image", gr.Image(to)],
+#     outputs=["image"]
+#     )
+
+# demo.launch()
