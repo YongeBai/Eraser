@@ -1,12 +1,12 @@
 {
   "3": {
     "inputs": {
-      "seed": 1,
-      "steps": 32,
+      "seed": 916789955313112,
+      "steps": 14,
       "cfg": 6.04,
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
-      "denoise": 0.5,
+      "denoise": 0.67,
       "model": [
         "36",
         0
@@ -40,7 +40,7 @@
   },
   "6": {
     "inputs": {
-      "text": "",
+      "text": "High Resolution, (skin texture:1.2), natural skin, clear skin",
       "clip": [
         "4",
         1
@@ -53,7 +53,7 @@
   },
   "7": {
     "inputs": {
-      "text": "",
+      "text": "(tattoos:1.4), blurry, low resolution, text, digital, cgi, deformed, 3D, (worst quality, low quality, illustration, 3d, 2d, painting, cartoons, sketch)",
       "clip": [
         "4",
         1
@@ -80,13 +80,23 @@
       "title": "VAE Decode"
     }
   },
+  "11": {
+    "inputs": {
+      "image": "clipspace/clipspace-mask-14328800.png [input]",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
   "13": {
     "inputs": {
       "expand": 2,
       "tapered_corners": true,
       "mask": [
-        "47",
-        1
+        "54",
+        0
       ]
     },
     "class_type": "GrowMask",
@@ -165,7 +175,7 @@
         2
       ],
       "pixels": [
-        "47",
+        "11",
         0
       ],
       "mask": [
@@ -194,25 +204,49 @@
   },
   "47": {
     "inputs": {
-      "image": "clipspace/clipspace-mask-4768228.png [input]",
-      "upload": "image"
+      "x": 0,
+      "y": 0,
+      "resize_source": true,
+      "destination": [
+        "11",
+        0
+      ],
+      "source": [
+        "8",
+        0
+      ],
+      "mask": [
+        "46",
+        0
+      ]
     },
-    "class_type": "LoadImage",
+    "class_type": "ImageCompositeMasked",
     "_meta": {
-      "title": "Load Image"
+      "title": "ImageCompositeMasked"
     }
   },
-  "48": {
+  "52": {
     "inputs": {
       "filename_prefix": "img",
       "images": [
-        "8",
+        "47",
         0
       ]
     },
     "class_type": "SaveImage",
     "_meta": {
       "title": "Save Image"
+    }
+  },
+  "54": {
+    "inputs": {
+      "image": "181204-F-ED851-0005.webp",
+      "channel": "red",
+      "upload": "image"
+    },
+    "class_type": "LoadImageMask",
+    "_meta": {
+      "title": "Load Image (as Mask)"
     }
   }
 }
