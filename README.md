@@ -16,4 +16,4 @@ Original Video | Erased Video
 
 Original Video | Erased Video
 --- | ---
-[![Original Video]()](/examples/video/periera-original.mp4) | [![Erased Video]()](/examples/video/periera-erased.mp4)
+https://github.com/YongeBai/Eraser/assets/97137323/da42b681-bf69-43a3-a349-1c89fc069fd3 | [![Erased Video]()](/examples/video/periera-erased.mp4)
