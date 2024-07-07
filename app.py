@@ -19,8 +19,8 @@ PROMPT_ENDPOINT = "prompt"
 VIEW_ENDPOINT = "view"
 UPLOAD_IMAGE_ENDPOINT = "upload/image"
 
-OUTPUT_DIR = "/home/yongebai/ComfyUI/output/"
-WORKFLOW = "no_tats_workflow.json"
+BLACK_WORKFLOW = "black_workflow.json"
+WHITE_WORKFLOW = "white_workflow.json"
 
 
 def queue_prompt(prompt):
@@ -47,7 +47,7 @@ def load_workflow(workflow_path):
         workflow["3"]["inputs"]["seed"] = random_num
         return workflow
 
-
+# loading checkpoint takes a long time
 def get_history(prompt_id, max_retries=20, delay=5):
     server_address = COMFY_ADDRESS + HISTORY_ENDPOINT
     server_address += "/" + prompt_id
@@ -116,8 +116,6 @@ def upload_image(numpy_img: np.ndarray, mask: bool) -> dict | None:
     headers = {"Content-Type": multipart_data.content_type}
 
     response = requests.post(server_address, data=multipart_data, headers=headers, timeout=10)
-    print(response.content)
-    print(response.status_code)
     try:
         return response.json()
     except json.JSONDecodeError as e:
@@ -136,7 +134,7 @@ def numpy_to_bytes(numpy_img: np.ndarray):
     return byte_arr.getvalue()
 
 
-def generate_image(numpy_img: np.ndarray, numpy_mask: np.ndarray):
+def generate_image(numpy_img: np.ndarray, numpy_mask: np.ndarray, workflow: str):
     try:
         # Step 1: Upload the image and mask
         upload_img_result = upload_image(numpy_img, mask=False)
@@ -146,7 +144,7 @@ def generate_image(numpy_img: np.ndarray, numpy_mask: np.ndarray):
         print("Upload mask result:", upload_mask_result)
 
         # Step 2: Load and modify the workflow
-        workflow = load_workflow(WORKFLOW)
+        workflow = load_workflow(workflow)
         image_path = (
             f"{upload_img_result['subfolder']}/{upload_img_result['name']}".strip("/")
         )
@@ -186,10 +184,19 @@ def generate_image(numpy_img: np.ndarray, numpy_mask: np.ndarray):
         print(f"Error in generate_image: {str(e)}")
         return None
 
-def parse_gradio(canvas_dict):
+def check_mask(mask: np.ndarray) -> str:    
+    # for some reason when the mask is black, num white pixels == num non-zero in alpha channel
+    alpha_channel = mask[:,:,3]
+    if np.count_nonzero(mask != 0) == np.count_nonzero(alpha_channel):
+        return BLACK_WORKFLOW
+    else:
+        return WHITE_WORKFLOW    
+
+def parse_gradio(canvas_dict) -> Image.Image | None:
     base_image = canvas_dict["background"]
     mask = canvas_dict["layers"][0]
-    generate_image(base_image, mask)
+    workflow = check_mask(mask)
+    return generate_image(base_image, mask, workflow)
 
 
 iface = gr.Interface(
@@ -198,13 +205,12 @@ iface = gr.Interface(
         gr.ImageEditor(
             type="numpy",
             sources=["upload", "clipboard"],
-            brush=gr.Brush(color_mode="fixed", colors=["#000000", "#ffffff"]),
+            brush=gr.Brush(color_mode="fixed", colors=["rgb(0,0,0)", "rgb(255,255,255)"]),
         )
     ],
     outputs=gr.Image(label="Output Image"),
-    title="Tattoo Removal Tool",
-    description="Upload an image, choose EITHER black or white to draw over tatoos, then get back image with tatoos removed.",
+    title="Tattoo Eraser",
+    description="Upload an image, choose EITHER white or black brush, draw over tatoos, then get back image with tatoos removed.",
 )
 
 iface.launch()
-

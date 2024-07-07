@@ -2,11 +2,11 @@
   "3": {
     "inputs": {
       "seed": 916789955313112,
-      "steps": 14,
-      "cfg": 6.04,
+      "steps": 20,
+      "cfg": 7.0,
       "sampler_name": "dpmpp_sde",
       "scheduler": "karras",
-      "denoise": 0.67,
+      "denoise": 0.5,
       "model": [
         "36",
         0
@@ -95,7 +95,7 @@
       "expand": 2,
       "tapered_corners": true,
       "mask": [
-        "54",
+        "55",
         0
       ]
     },
@@ -227,7 +227,7 @@
   },
   "52": {
     "inputs": {
-      "filename_prefix": "img",
+      "filename_prefix": "image",
       "images": [
         "47",
         0
@@ -241,12 +241,24 @@
   "54": {
     "inputs": {
       "image": "181204-F-ED851-0005.webp",
-      "channel": "red",
+      "channel": "alpha",
       "upload": "image"
     },
     "class_type": "LoadImageMask",
     "_meta": {
       "title": "Load Image (as Mask)"
+    }
+  },
+  "55": {
+    "inputs": {
+      "mask": [
+        "54",
+        0
+      ]
+    },
+    "class_type": "InvertMask",
+    "_meta": {
+      "title": "InvertMask"
     }
   }
 }
